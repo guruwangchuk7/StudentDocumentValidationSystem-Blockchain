@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import axios from "axios";
-import { isAddress } from "viem";
-import { bytesToHex, stringToBytes } from "viem";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { ArrowUpOnSquareIcon } from "@heroicons/react/24/outline";
-import { AddressInput } from "~~/components/scaffold-eth";
+import { useState } from "react";
+import { ArrowUpOnSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
+// This component now includes a real API call to the backend.
 const UniversityAdmin = () => {
-  // State for each form field
+  // --- Login State ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // --- Form State ---
   const [certificateIdInput, setCertificateIdInput] = useState("");
   const [studentFullName, setStudentFullName] = useState("");
   const [gender, setGender] = useState("");
@@ -18,20 +21,9 @@ const UniversityAdmin = () => {
   const [graduationDate, setGraduationDate] = useState("");
   const [universityName, setUniversityName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [studentAddress, setStudentAddress] = useState("");
-
-  // State for handling the submission process
+  const [studentIdentifier, setStudentIdentifier] = useState(""); // For CID or Aadhaar
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-
-  const formattedCertificateId = useMemo(() => {
-    if (!certificateIdInput) return "";
-    return bytesToHex(stringToBytes(certificateIdInput, { size: 32 }));
-  }, [certificateIdInput]);
-
-  const { writeContractAsync: issueCertificate, isPending } = useScaffoldWriteContract({
-    contractName: "Certificate",
-  });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -39,58 +31,115 @@ const UniversityAdmin = () => {
     }
   };
 
+  // --- Real login function with API integration ---
+  const handleLogin = async () => {
+    setLoginError("");
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch("/api/admin-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        setLoginError("Invalid account. Please check your credentials.");
+        return;
+      }
+
+      setIsLoggedIn(true);
+    } catch (e: any) {
+      setLoginError("An error occurred. Please try again.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // --- Real handleSubmit function with API integration ---
   const handleSubmit = async () => {
     setStatus("");
     setError("");
 
-    if (!formattedCertificateId || !studentFullName || !degreeName || !universityName || !selectedFile || !isAddress(studentAddress)) {
-      setError("Please fill out all required fields, including a valid student wallet address.");
+    if (!certificateIdInput || !studentFullName || !degreeName || !universityName || !selectedFile || !studentIdentifier) {
+      setError("Please fill out all required fields.");
       return;
     }
 
+    setStatus("Processing...");
+
+    const formData = new FormData();
+    formData.append("certificateId", certificateIdInput);
+    formData.append("studentFullName", studentFullName);
+    formData.append("gender", gender);
+    formData.append("dateOfBirth", dateOfBirth);
+    formData.append("degreeName", degreeName);
+    formData.append("graduationDate", graduationDate);
+    formData.append("universityName", universityName);
+    formData.append("studentIdentifier", studentIdentifier);
+    formData.append("file", selectedFile);
+
     try {
-      setStatus("Uploading file to IPFS...");
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      const response = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
-        headers: {
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY,
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY,
-        },
+      const response = await fetch("/api/issue-certificate", {
+        method: "POST",
+        body: formData,
       });
-      const certificateCID = response.data.IpfsHash;
 
-      setStatus("Issuing certificate on the blockchain...");
-      await issueCertificate({
-        functionName: "issueCertificate",
-        args: [
-          formattedCertificateId,
-          studentFullName,
-          gender,
-          dateOfBirth,
-          degreeName,
-          graduationDate,
-          universityName,
-          certificateCID,
-          studentAddress,
-        ],
-      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "An unknown error occurred.");
+      }
 
       setStatus("Certificate issued successfully!");
     } catch (e: any) {
       console.error("Error issuing certificate:", e);
-      setError(e.message || "An unexpected error occurred.");
+      setError(e.message);
       setStatus("");
     }
   };
+
+  // --- Conditional Rendering ---
+
+  if (!isLoggedIn) {
+    return (
+      <div className="container mx-auto mt-20 flex justify-center">
+        <div className="card w-96 bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="text-center">
+              <LockClosedIcon className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="card-title justify-center text-2xl">Admin Login</h2>
+              <p className="text-sm text-gray-500">Access the certificate issuance dashboard.</p>
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Email</span></label>
+              <input type="email" placeholder="admin@university.edu" className="input input-bordered" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Password</span></label>
+              <input type="password" placeholder="••••••••" className="input input-bordered" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            {loginError && <div className="text-error text-sm mt-2">{loginError}</div>}
+            <div className="card-actions justify-end mt-4">
+              <button className="btn btn-primary w-full" onClick={handleLogin} disabled={isLoggingIn}>
+                {isLoggingIn && <span className="loading loading-spinner"></span>}
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto mt-10 p-4 max-w-2xl">
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h1 className="card-title text-2xl">Issue Student Certificate</h1>
-          <p className="mb-4">Fill in the details below and upload the certificate file to issue it on the blockchain.</p>
+          <p className="mb-4">Fill in the details below and upload the certificate file.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
@@ -122,8 +171,8 @@ const UniversityAdmin = () => {
               <input type="date" className="input input-bordered" value={graduationDate} onChange={e => setGraduationDate(e.target.value)} />
             </div>
             <div className="form-control col-span-1 md:col-span-2">
-              <label className="label"><span className="label-text font-semibold">Student Wallet Address*</span></label>
-              <AddressInput value={studentAddress} onChange={setStudentAddress} placeholder="Enter student's 0x... address" />
+              <label className="label"><span className="label-text font-semibold">Student's CID or Aadhaar*</span></label>
+              <input type="text" placeholder="Enter student's identifier" className="input input-bordered" value={studentIdentifier} onChange={e => setStudentIdentifier(e.target.value)} />
             </div>
             <div className="form-control col-span-1 md:col-span-2">
               <label className="label"><span className="label-text font-semibold">Certificate File (PDF/Image)*</span></label>
@@ -132,9 +181,9 @@ const UniversityAdmin = () => {
           </div>
 
           <div className="card-actions justify-end mt-6">
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={isPending || !!status}>
-              {isPending || status ? <span className="loading loading-spinner"></span> : <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />}
-              {status || (isPending ? "Confirm in wallet..." : "Issue Certificate")}
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={!!status}>
+              {status ? <span className="loading loading-spinner"></span> : <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />}
+              {status || "Issue Certificate"}
             </button>
           </div>
 
