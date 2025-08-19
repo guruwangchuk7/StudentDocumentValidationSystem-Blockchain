@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ArrowUpOnSquareIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
-// This component now includes a real API call to the backend.
 const UniversityAdmin = () => {
   // --- Login State ---
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,8 +21,12 @@ const UniversityAdmin = () => {
   const [universityName, setUniversityName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [studentIdentifier, setStudentIdentifier] = useState(""); // For CID or Aadhaar
+
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ separate loading state
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null); // ✅ to reset file input
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -31,7 +34,7 @@ const UniversityAdmin = () => {
     }
   };
 
-  // --- Real login function with API integration ---
+  // --- Login Function ---
   const handleLogin = async () => {
     setLoginError("");
     setIsLoggingIn(true);
@@ -58,17 +61,24 @@ const UniversityAdmin = () => {
     }
   };
 
-  // --- Real handleSubmit function with API integration ---
+  // --- Submit Certificate ---
   const handleSubmit = async () => {
-    setStatus("");
     setError("");
+    setStatus("");
 
-    if (!certificateIdInput || !studentFullName || !degreeName || !universityName || !selectedFile || !studentIdentifier) {
+    if (
+      !certificateIdInput ||
+      !studentFullName ||
+      !degreeName ||
+      !universityName ||
+      !selectedFile ||
+      !studentIdentifier
+    ) {
       setError("Please fill out all required fields.");
       return;
     }
 
-    setStatus("Processing...");
+    setIsSubmitting(true); // ✅ start loading
 
     const formData = new FormData();
     formData.append("certificateId", certificateIdInput);
@@ -93,16 +103,32 @@ const UniversityAdmin = () => {
         throw new Error(result.error || "An unknown error occurred.");
       }
 
+      // ✅ success
       setStatus("Certificate issued successfully!");
+
+      // ✅ reset form after success
+      setCertificateIdInput("");
+      setStudentFullName("");
+      setGender("");
+      setDateOfBirth("");
+      setDegreeName("");
+      setGraduationDate("");
+      setUniversityName("");
+      setSelectedFile(null);
+      setStudentIdentifier("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // ✅ clear file input
+      }
     } catch (e: any) {
       console.error("Error issuing certificate:", e);
       setError(e.message);
-      setStatus("");
+    } finally {
+      setIsSubmitting(false); // ✅ stop loading
     }
   };
 
   // --- Conditional Rendering ---
-
   if (!isLoggedIn) {
     return (
       <div className="container mx-auto mt-20 flex justify-center">
@@ -176,19 +202,23 @@ const UniversityAdmin = () => {
             </div>
             <div className="form-control col-span-1 md:col-span-2">
               <label className="label"><span className="label-text font-semibold">Certificate File (PDF/Image)*</span></label>
-              <input type="file" className="file-input file-input-bordered" onChange={handleFileChange} />
+              <input type="file" ref={fileInputRef} className="file-input file-input-bordered" onChange={handleFileChange} />
             </div>
           </div>
 
           <div className="card-actions justify-end mt-6">
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={!!status}>
-              {status ? <span className="loading loading-spinner"></span> : <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />}
-              {status || "Issue Certificate"}
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="loading loading-spinner"></span>
+              ) : (
+                <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />
+              )}
+              {isSubmitting ? "Processing..." : "Issue Certificate"}
             </button>
           </div>
 
           {error && <div className="alert alert-error mt-4">{error}</div>}
-          {status === "Certificate issued successfully!" && <div className="alert alert-success mt-4">{status}</div>}
+          {status && <div className="alert alert-success mt-4">{status}</div>}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 import {
   ArrowDownTrayIcon,
   BuildingOfficeIcon,
@@ -12,26 +13,8 @@ import {
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 
-// --- Mock Data ---
-const mockCertificates = [
-  {
-    id: "0x123abc",
-    degreeName: "Bachelor of Computer Science",
-    universityName: "Stanford University",
-    graduationDate: "2024-05-15",
-    certificateFileCID: "QmX4k2P9mB7nF8qR5sL3vK9wE1tY6u2iO8p4mN7cV3xZ9",
-  },
-  {
-    id: "0x456def",
-    degreeName: "Master of Business Administration",
-    universityName: "Harvard Business School",
-    graduationDate: "2023-12-10",
-    certificateFileCID: "QmA7sL3kP8mN5rF9qB2vK4wE6tY1u8iO3p9mC7xV2zN4",
-  },
-];
-
-// --- Reusable Certificate Card Component ---
-const CertificateCard = ({ certificate }: { certificate: (typeof mockCertificates)[0] }) => {
+// --- Certificate Card ---
+const CertificateCard = ({ certificate }: { certificate: any }) => {
   const handleShare = () => {
     if (certificate.certificateFileCID) {
       navigator.clipboard.writeText(`https://gateway.pinata.cloud/ipfs/${certificate.certificateFileCID}`);
@@ -80,48 +63,80 @@ const CertificateCard = ({ certificate }: { certificate: (typeof mockCertificate
   );
 };
 
-// --- Main Student Page Component ---
+// --- Main Student Page ---
 const StudentPage = () => {
-  // --- Auth State ---
   const [authMode, setAuthMode] = useState<"login" | "signup" | "dashboard">("login");
-  const [identifier, setIdentifier] = useState(""); // For CID or Aadhaar
+  const [studentIdentifier, setStudentIdentifier] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-
-  // --- Dashboard State ---
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setAuthError("");
-    if (!identifier || !password) {
-      setAuthError("Please provide your identifier and password.");
+    if (!studentIdentifier || !email || !password) {
+      setAuthError("Please provide identifier, email, and password.");
       return;
     }
+
     setIsAuthenticating(true);
-    setTimeout(() => {
-      console.log("Attempting login for:", identifier);
-      setAuthMode("dashboard");
+    try {
+      const res = await axios.post("/api/student-login", {
+        student_identifier: studentIdentifier,
+        email,
+        password,
+      });
+      if (res.data?.success) {
+        setCertificates(res.data.certificates || []);
+        setAuthMode("dashboard");
+      } else {
+        setAuthError(res.data?.message || "Login failed");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAuthError(err?.response?.data?.message || "Server error. Try again.");
+    } finally {
       setIsAuthenticating(false);
-    }, 1000);
+    }
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     setAuthError("");
-    if (!identifier || !email || !password) {
-      setAuthError("Please fill all required fields to sign up.");
+    if (!studentIdentifier || !fullName || !email || !password) {
+      setAuthError("Please fill all fields to sign up.");
       return;
     }
+
     setIsAuthenticating(true);
-    setTimeout(() => {
-      console.log("Signing up user:", identifier, "with email:", email);
-      setAuthMode("dashboard");
+    try {
+      const res = await axios.post("/api/student-signup", {
+        student_identifier: studentIdentifier,
+        full_name: fullName,
+        email,
+        password,
+      });
+      if (res.data?.success) {
+        setCertificates(res.data.certificates || []);
+        setAuthMode("dashboard");
+      } else {
+        setAuthError(res.data?.message || "Sign up failed");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAuthError(err?.response?.data?.message || "Server error. Try again.");
+    } finally {
       setIsAuthenticating(false);
-    }, 1000);
+    }
   };
 
-  // --- Conditional Rendering ---
+  const filteredCertificates = certificates.filter(
+    cert =>
+      cert.degreeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cert.universityName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (authMode !== "dashboard") {
     return (
@@ -134,35 +149,71 @@ const StudentPage = () => {
               ) : (
                 <UserPlusIcon className="h-12 w-12 text-primary mx-auto mb-4" />
               )}
-              <h2 className="card-title justify-center text-2xl">{authMode === "login" ? "Student Login" : "Student Sign Up"}</h2>
+              <h2 className="card-title justify-center text-2xl">
+                {authMode === "login" ? "Student Login" : "Student Sign Up"}
+              </h2>
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">CID or Aadhaar Card Number</span></label>
-              <input type="text" placeholder="Enter your identifier" className="input input-bordered" value={identifier} onChange={e => setIdentifier(e.target.value)} />
+              <label className="label"><span className="label-text">CID / Aadhaar</span></label>
+              <input
+                type="text"
+                className="input input-bordered"
+                value={studentIdentifier}
+                onChange={e => setStudentIdentifier(e.target.value)}
+              />
             </div>
 
             {authMode === "signup" && (
               <div className="form-control">
-                <label className="label"><span className="label-text">Email</span></label>
-                <input type="email" placeholder="student@example.com" className="input input-bordered" value={email} onChange={e => setEmail(e.target.value)} />
+                <label className="label"><span className="label-text">Full Name</span></label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="John Doe"
+                />
               </div>
             )}
 
             <div className="form-control">
+              <label className="label"><span className="label-text">Email</span></label>
+              <input
+                type="email"
+                className="input input-bordered"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="example@gmail.com"
+              />
+            </div>
+
+            <div className="form-control">
               <label className="label"><span className="label-text">Password</span></label>
-              <input type="password" placeholder="••••••••" className="input input-bordered" value={password} onChange={e => setPassword(e.target.value)} />
+              <input
+                type="password"
+                className="input input-bordered"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
             </div>
 
             {authError && <div className="text-error text-sm mt-2">{authError}</div>}
 
             <div className="card-actions flex-col mt-4">
-              <button className="btn btn-primary w-full" onClick={authMode === "login" ? handleLogin : handleSignUp} disabled={isAuthenticating}>
+              <button
+                className="btn btn-primary w-full"
+                onClick={authMode === "login" ? handleLogin : handleSignUp}
+                disabled={isAuthenticating}
+              >
                 {isAuthenticating && <span className="loading loading-spinner"></span>}
                 {authMode === "login" ? "Login" : "Sign Up"}
               </button>
               <div className="divider text-xs">OR</div>
-              <button className="btn btn-ghost w-full" onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}>
+              <button
+                className="btn btn-ghost w-full"
+                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+              >
                 {authMode === "login" ? "Create a New Account" : "Already have an account? Login"}
               </button>
             </div>
@@ -172,19 +223,14 @@ const StudentPage = () => {
     );
   }
 
-  // --- Dashboard View ---
-  const filteredCertificates = mockCertificates.filter(
-    cert =>
-      cert.degreeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cert.universityName.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-          <p className="text-gray-600">Welcome, Student ({identifier})</p>
+          <p className="text-gray-600">
+            Welcome, {certificates[0]?.full_name || studentIdentifier} ({email})
+          </p>
         </div>
 
         <div className="mb-8">
@@ -206,7 +252,7 @@ const StudentPage = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCertificates.map(cert => (
-            <CertificateCard key={cert.id} certificate={cert} />
+            <CertificateCard key={cert.id || cert.certificate_id} certificate={cert} />
           ))}
         </div>
 

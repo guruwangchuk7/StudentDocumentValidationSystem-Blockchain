@@ -56,5 +56,12 @@
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=20.18.3"
+  },
+  "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.1",
+    "inquirer": "^12.9.3",
+    "mysql2": "^3.14.3"
   }
 }
