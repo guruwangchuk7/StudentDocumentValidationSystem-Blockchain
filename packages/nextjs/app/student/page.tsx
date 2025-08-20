@@ -13,8 +13,23 @@ import {
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 
+// --- Types ---
+interface Certificate {
+  id: number;
+  certificate_id?: string;
+  degreeName: string;
+  universityName: string;
+  graduationDate: string;
+  certificateFileCID: string;
+}
+
+interface StudentInfo {
+  full_name: string;
+  email: string;
+}
+
 // --- Certificate Card ---
-const CertificateCard = ({ certificate }: { certificate: any }) => {
+const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
   const handleShare = () => {
     if (certificate.certificateFileCID) {
       navigator.clipboard.writeText(`https://gateway.pinata.cloud/ipfs/${certificate.certificateFileCID}`);
@@ -72,9 +87,11 @@ const StudentPage = () => {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [certificates, setCertificates] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // --- Login ---
   const handleLogin = async () => {
     setAuthError("");
     if (!studentIdentifier || !email || !password) {
@@ -89,8 +106,10 @@ const StudentPage = () => {
         email,
         password,
       });
+
       if (res.data?.success) {
         setCertificates(res.data.certificates || []);
+        setStudentInfo({ full_name: res.data.full_name, email: res.data.email });
         setAuthMode("dashboard");
       } else {
         setAuthError(res.data?.message || "Login failed");
@@ -103,6 +122,7 @@ const StudentPage = () => {
     }
   };
 
+  // --- Sign Up ---
   const handleSignUp = async () => {
     setAuthError("");
     if (!studentIdentifier || !fullName || !email || !password) {
@@ -118,8 +138,10 @@ const StudentPage = () => {
         email,
         password,
       });
+
       if (res.data?.success) {
         setCertificates(res.data.certificates || []);
+        setStudentInfo({ full_name: res.data.full_name, email: res.data.email });
         setAuthMode("dashboard");
       } else {
         setAuthError(res.data?.message || "Sign up failed");
@@ -132,12 +154,28 @@ const StudentPage = () => {
     }
   };
 
+  // --- Refresh Certificates ---
+  const refreshCertificates = async () => {
+    if (!studentIdentifier || !email || !password) return;
+    try {
+      const res = await axios.post("/api/student-login", {
+        student_identifier: studentIdentifier,
+        email,
+        password,
+      });
+      if (res.data?.success) setCertificates(res.data.certificates || []);
+    } catch (err) {
+      console.error("Failed to refresh certificates", err);
+    }
+  };
+
   const filteredCertificates = certificates.filter(
     cert =>
-      cert.degreeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cert.universityName?.toLowerCase().includes(searchQuery.toLowerCase())
+      cert.degreeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cert.universityName.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  // --- Auth Forms ---
   if (authMode !== "dashboard") {
     return (
       <div className="container mx-auto mt-20 flex justify-center">
@@ -155,7 +193,9 @@ const StudentPage = () => {
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">CID / Aadhaar</span></label>
+              <label className="label">
+                <span className="label-text">CID / Aadhaar</span>
+              </label>
               <input
                 type="text"
                 className="input input-bordered"
@@ -166,7 +206,9 @@ const StudentPage = () => {
 
             {authMode === "signup" && (
               <div className="form-control">
-                <label className="label"><span className="label-text">Full Name</span></label>
+                <label className="label">
+                  <span className="label-text">Full Name</span>
+                </label>
                 <input
                   type="text"
                   className="input input-bordered"
@@ -178,7 +220,9 @@ const StudentPage = () => {
             )}
 
             <div className="form-control">
-              <label className="label"><span className="label-text">Email</span></label>
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
               <input
                 type="email"
                 className="input input-bordered"
@@ -189,7 +233,9 @@ const StudentPage = () => {
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">Password</span></label>
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
               <input
                 type="password"
                 className="input input-bordered"
@@ -223,14 +269,18 @@ const StudentPage = () => {
     );
   }
 
+  // --- Dashboard ---
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
           <p className="text-gray-600">
-            Welcome, {certificates[0]?.full_name || studentIdentifier} ({email})
+            Welcome, {studentInfo?.full_name || studentIdentifier} ({studentInfo?.email || email})
           </p>
+          <button onClick={refreshCertificates} className="btn btn-sm btn-outline mt-2">
+            Refresh Certificates
+          </button>
         </div>
 
         <div className="mb-8">
