@@ -1252,6 +1252,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@glennsl/bs-json@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@glennsl/bs-json@npm:3.0.0"
+  peerDependencies:
+    bs-platform: ^4.0.2
+  checksum: 7801c2ccb4d0022a2eebc2710d2de5a2a6ab146392d352e8fb49a3fddd36c251479a50939dbf2ebce16ed95cc99d3f9d4c2dcf558f01e1e28fecdc78a1ec1ad4
+  languageName: node
+  linkType: hard
+
 "@heroicons/react@npm:^2.2.0":
   version: 2.2.0
   resolution: "@heroicons/react@npm:2.2.0"
@@ -3674,6 +3683,7 @@ __metadata:
     next: ~15.2.3
     next-nprogress-bar: ~2.3.13
     next-themes: ~0.3.0
+    pinata-sdk: ^0.1.7
     postcss: ~8.4.45
     prettier: ~3.5.3
     qrcode.react: ~4.0.1
@@ -6553,6 +6563,15 @@ __metadata:
   bin:
     browserslist: cli.js
   checksum: 104f151563a797f95cda7ae862938939c41b89975960cba4615a389238cdd98dcf2ec4ea804c97374c39457f1f476bc58cfd2826fdccff5dba91e2ca45f5b1b3
+  languageName: node
+  linkType: hard
+
+"bs-fetch@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "bs-fetch@npm:0.3.1"
+  peerDependencies:
+    bs-platform: ^4.0.6
+  checksum: 3213cc957c99dbc1d6cd49d334b143243e3b3cdaae72f9372be9dd07e3ed06895878081db5787fd67200769924e6dea9b6d4240d838a992cfc9ffee1618ba7a8
   languageName: node
   linkType: hard
 
@@ -13214,7 +13233,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.7, node-fetch@npm:^2.7.0":
+"node-fetch@npm:^2.3.0, node-fetch@npm:^2.6.7, node-fetch@npm:^2.7.0":
   version: 2.7.0
   resolution: "node-fetch@npm:2.7.0"
   dependencies:
@@ -14265,6 +14284,17 @@ __metadata:
   version: 5.0.0
   resolution: "pify@npm:5.0.0"
   checksum: 443e3e198ad6bfa8c0c533764cf75c9d5bc976387a163792fb553ffe6ce923887cf14eebf5aea9b7caa8eab930da8c33612990ae85bd8c2bc18bedb9eae94ecb
+  languageName: node
+  linkType: hard
+
+"pinata-sdk@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "pinata-sdk@npm:0.1.7"
+  dependencies:
+    "@glennsl/bs-json": ^3.0.0
+    bs-fetch: ^0.3.1
+    node-fetch: ^2.3.0
+  checksum: 9c4799e1c25088dfe5b5325ca640f541870a0d1e289082cd2707b33faefc8083c8c742838f71b30ef7b8304237bf5d59faa9deb0a99cc157cc292c05a7d56b46
   languageName: node
   linkType: hard
 

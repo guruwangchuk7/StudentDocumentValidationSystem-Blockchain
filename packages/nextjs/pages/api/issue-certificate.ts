@@ -22,10 +22,22 @@ const dbConfig = {
 // Helper to safely parse Formidable form
 const parseForm = (req: NextApiRequest) =>
   new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-    const form = formidable({ multiples: false });
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true, // Add this
+      maxFileSize: 5 * 1024 * 1024, // Add this: 5MB limit
+    });
+
+    // Add debug logging
+    form.on("file", (name, file) => {
+      console.log("Received file:", name, file.originalFilename);
+    });
+
     form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
+      if (err) {
+        console.error("Formidable error:", err);
+        reject(err);
+      } else resolve({ fields, files });
     });
   });
 
@@ -39,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { fields, files } = await parseForm(req);
+    console.log("Formidable files object:", files);
 
     // Extract fields
     const certificateId = toString(fields.certificateId);
@@ -51,7 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const studentIdentifier = toString(fields.studentIdentifier);
 
     // Extract uploaded file
-    const file = files.file as formidable.File | undefined;
+    const fileArray = files.file as formidable.File[] | formidable.File | undefined;
+    const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+
     if (!file || !file.filepath) {
       return res.status(400).json({ error: "No file uploaded" });
     }
