@@ -1,5 +1,6 @@
 // pages/api/issue-certificate.ts
 import PinataSDK from "@pinata/sdk";
+import crypto from "crypto";
 import formidable from "formidable";
 import fs from "fs";
 import mysql from "mysql2/promise";
@@ -71,6 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    // --- NEW: Generate SHA256 hash of the file ---
+    const fileBuffer = fs.readFileSync(file.filepath);
+    const certificateHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+
     // Create readable stream for Pinata
     const readableStream = fs.createReadStream(file.filepath);
 
@@ -87,12 +92,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const ipfsCID = pinataResult.IpfsHash;
 
-    // Insert into MySQL
+    // Insert into MySQL (add certificate_hash)
     const conn = await mysql.createConnection(dbConfig);
     await conn.execute(
       `INSERT INTO certificates 
-      (certificate_id, student_identifier, degree_name, university_name, graduation_date, ipfs_cid, issue_date, gender, date_of_birth) 
-      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
+      (certificate_id, student_identifier, degree_name, university_name, graduation_date, ipfs_cid, issue_date, gender, date_of_birth, certificate_hash) 
+      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
       [
         certificateId,
         studentIdentifier,
@@ -102,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ipfsCID,
         gender,
         dateOfBirth || null,
+        certificateHash, // <-- NEW
       ],
     );
     await conn.end();
