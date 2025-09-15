@@ -60,7 +60,6 @@ The system uses **Ethereum blockchain** and **IPFS** for immutable and tamper-pr
 * Hardhat (local blockchain)
 
 ---
----
 
 ### --- Installation Guide: StudentDocumentValidationSystem-Blockchain ---
 
