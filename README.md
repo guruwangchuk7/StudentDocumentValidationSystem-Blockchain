@@ -59,9 +59,8 @@ The system uses **Ethereum blockchain** and **IPFS** for immutable and tamper-pr
 * Scaffold-ETH 2
 * Hardhat (local blockchain)
 
----
-
 ### --- Installation Guide: StudentDocumentValidationSystem-Blockchain ---
+---
 
 This guide provides step-by-step instructions to set up and run the Student Document Validation System on a new machine.
 
