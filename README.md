@@ -60,44 +60,6 @@ The system uses **Ethereum blockchain** and **IPFS** for immutable and tamper-pr
 * Hardhat (local blockchain)
 
 ---
-
-# 🎯 Problem Statement
-
-Many people and organizations struggle to verify the authenticity of certificates.
-Traditional systems are often **slow, costly**, and **vulnerable to fraud**, affecting employers, schools, and students alike.
-
----
-
-## 🔑 Key Questions & Answers
-
-### What traditional centralized problem are you solving with decentralization?
-
-By storing certificates on **IPFS** and registering them on the **Ethereum blockchain**, we eliminate reliance on a single institution. Employers can verify certificates instantly—**no third-party or university contact required.**
-
-### How does your application empower users with data ownership?
-
-Students control their own verified, immutable certificates via IPFS. Once issued, universities cannot modify or revoke them—ensuring **permanent, tamper-proof proof of education.**
-This grants **global shareability and user-owned credentials**.
-
----
-
-# 💡 Solution Breakdown
-
-### ✅ Decentralized Architecture
-
-* Uses **Ethereum + IPFS** for transparent, trustless data validation
-* No reliance on central institutions
-
-### ✅ User Empowerment
-
-* Students retain **full control** over their data
-* Institutions can’t delete, modify, or restrict access
-
-### ✅ Innovation Factor
-
-* One of the first DApps to offer secure, blockchain-based certificate verification
-* Bridges real-world educational records with decentralized technology
-
 ---
 
 ### --- Installation Guide: StudentDocumentValidationSystem-Blockchain ---
@@ -202,8 +164,43 @@ npm start
 ---
 
 **For any issues, open an issue on [GitHub Issues](https://github.com/guruwangchuk7/StudentDocumentValidationSystem-Blockchain/issues).**
+---
+# 🎯 Problem Statement
 
--------------------------------------------------------------------------------------------------------------------------------------------
+Many people and organizations struggle to verify the authenticity of certificates.
+Traditional systems are often **slow, costly**, and **vulnerable to fraud**, affecting employers, schools, and students alike.
+
+---
+
+## 🔑 Key Questions & Answers
+
+### What traditional centralized problem are you solving with decentralization?
+
+By storing certificates on **IPFS** and registering them on the **Ethereum blockchain**, we eliminate reliance on a single institution. Employers can verify certificates instantly—**no third-party or university contact required.**
+
+### How does your application empower users with data ownership?
+
+Students control their own verified, immutable certificates via IPFS. Once issued, universities cannot modify or revoke them—ensuring **permanent, tamper-proof proof of education.**
+This grants **global shareability and user-owned credentials**.
+
+---
+
+# 💡 Solution Breakdown
+
+### ✅ Decentralized Architecture
+
+* Uses **Ethereum + IPFS** for transparent, trustless data validation
+* No reliance on central institutions
+
+### ✅ User Empowerment
+
+* Students retain **full control** over their data
+* Institutions can’t delete, modify, or restrict access
+
+### ✅ Innovation Factor
+
+* One of the first DApps to offer secure, blockchain-based certificate verification
+* Bridges real-world educational records with decentralized technology
 
 # 🌟 Key Features
 
