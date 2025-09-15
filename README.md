@@ -199,11 +199,6 @@ npm start
 - Ensure all environment variables are set correctly.
 - Check database and blockchain node connectivity.
 
-## Additional Notes
-
-- Refer to the project's README for more details.
-- For Docker users, run `docker-compose up` if a `docker-compose.yml` file is present.
-
 ---
 
 **For any issues, open an issue on [GitHub Issues](https://github.com/guruwangchuk7/StudentDocumentValidationSystem-Blockchain/issues).**
