@@ -98,7 +98,7 @@ This grants **global shareability and user-owned credentials**.
 * One of the first DApps to offer secure, blockchain-based certificate verification
 * Bridges real-world educational records with decentralized technology
 
--------------------------------------------------------------------------------------------------------------------------------------------
+---
 
 ### --- Installation Guide: StudentDocumentValidationSystem-Blockchain ---
 
